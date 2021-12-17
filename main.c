@@ -91,9 +91,9 @@ void do_statistics(uint64_t *measurements, uint64_t n, struct statistics *out_st
 	out_stats->min = min;
 	out_stats->max = max;
 	if (n % 2) {
-		out_stats->mean = measurements[n / 2];
+		out_stats->median = measurements[n / 2];
 	} else {
-		out_stats->mean = (measurements[n / 2] + measurements[n / 2 - 1]) / 2;
+		out_stats->median = (measurements[n / 2] + measurements[n / 2 - 1]) / 2;
 	}
 	out_stats->average = avg;
 	out_stats->variance = var;
@@ -105,7 +105,7 @@ void print_stats(struct statistics *stats, const char *str) {
     fraction_to_dec(stats->average, 2, &a, &x);
     fraction_to_dec(stats->variance, 2, &b, &y);
     PRINT("%16s min=%4ld, max=%8ld, median=%4ld,\taverage=%4ld.%ld,\tvariance=%8ld.%ld\n",
-        str, stats->min, stats->max, stats->mean, a, x, b, y); 
+        str, stats->min, stats->max, stats->median, a, x, b, y); 
 }
 
 /* uk_print apparently can't print floating point numbers, so use this instead 
