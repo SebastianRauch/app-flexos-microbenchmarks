@@ -40,6 +40,9 @@
 #include <uk/sched.h>
 #include <flexos/impl/main_annotation.h>
 
+// to easily change print method
+#define PRINT uk_pr_err
+
 static inline int cmp_int(const void *x, const void *y) 
 {
     uint64_t a = *((uint64_t*) x);
@@ -101,7 +104,7 @@ void print_stats(struct statistics *stats, const char *str) {
     uint64_t x, y;
     fraction_to_dec(stats->average, 2, &a, &x);
     fraction_to_dec(stats->variance, 2, &b, &y);
-    uk_pr_info("%16s min=%4ld, max=%8ld, median=%4ld,\taverage=%4ld.%ld,\tvariance=%8ld.%ld\n",
+    PRINT("%16s min=%4ld, max=%8ld, median=%4ld,\taverage=%4ld.%ld,\tvariance=%8ld.%ld\n",
         str, stats->min, stats->max, stats->mean, a, x, b, y); 
 }
 
@@ -396,13 +399,13 @@ static inline void RUN_FCALL(void)
 int main(int argc, char *argv[])
 {
 #if CONFIG_LIBFLEXOS_GATE_INTELPKU_PRIVATE_STACKS
-    uk_pr_info("Measuring gate latencies with stack isolating gates...\n");
+    PRINT("Measuring gate latencies with stack isolating gates...\n");
 #elif CONFIG_LIBFLEXOS_GATE_INTELPKU_SHARED_STACKS
-    uk_pr_info("Measuring gate latencies with shared stacks...\n");
+    PRINT("Measuring gate latencies with shared stacks...\n");
 #elif CONFIG_LIBFLEXOS_VMEPT
-    uk_pr_info("Measuring gate latencies with VM/EPT RPC gates...\n");
+    PRINT("Measuring gate latencies with VM/EPT RPC gates...\n");
 #else
-    uk_pr_info("Measuring gate latencies with *UNKNOWN* gates...\n");
+    PRINT("Measuring gate latencies with *UNKNOWN* gates...\n");
 #endif
 
     uint32_t overhead_tsc, overhead_gate, overhead_fcall, t0, t1;
