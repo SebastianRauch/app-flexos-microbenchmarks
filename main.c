@@ -41,7 +41,7 @@
 #include <flexos/impl/main_annotation.h>
 
 // to easily change print method
-#define PRINT uk_pr_err
+#define PRINT printf
 
 static inline int cmp_int(const void *x, const void *y) 
 {
