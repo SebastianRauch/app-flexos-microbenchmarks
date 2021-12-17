@@ -57,7 +57,7 @@ struct statistics {
 	uint64_t num_measurements;
 	uint64_t min;
 	uint64_t max;
-	uint64_t mean;
+	uint64_t median;
 	double average;
 	double variance;
 };
@@ -101,7 +101,7 @@ void print_stats(struct statistics *stats, const char *str) {
     uint64_t x, y;
     fraction_to_dec(stats->average, 2, &a, &x);
     fraction_to_dec(stats->variance, 2, &b, &y);
-    uk_pr_info("%16s min=%4ld, max=%8ld, mean=%4ld,\taverage=%4ld.%ld,\tvariance=%8ld.%ld\n",
+    uk_pr_info("%16s min=%4ld, max=%8ld, median=%4ld,\taverage=%4ld.%ld,\tvariance=%8ld.%ld\n",
         str, stats->min, stats->max, stats->mean, a, x, b, y); 
 }
 
