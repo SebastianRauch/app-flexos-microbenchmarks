@@ -11,12 +11,12 @@ targets:
 compartments:
   - name: comp1
     mechanism:
-      driver: intel-pku
+      driver: vmept
       noisolstack: false
     default: true
   - name: comp2
     mechanism:
-      driver: intel-pku
+      driver: vmept
       noisolstack: true
 libraries:
   tlsf:
