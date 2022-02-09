@@ -206,7 +206,8 @@ void print_stats(struct statistics *stats, const char *str) {
     uint64_t x, y;
     fraction_to_dec(stats->average, 2, &a, &x);
     fraction_to_dec(stats->variance, 2, &b, &y);
-    PRINT("%16s min=%4ld, max=%8ld, median=%4ld,\taverage=%4ld.%ld,\tvariance=%8ld.%ld\n",
+	// fomat: description min max median average variance
+    PRINT("%16s %4ld \t %8ld \t %4ld \t %4ld.%ld \t %8ld.%ld\n",
         str, stats->min, stats->max, stats->median, a, x, b, y);
 }
 
@@ -634,51 +635,53 @@ int main(int argc, char *argv[])
     struct statistics stats_remotecall_6r;
 	BENCHMARK(GATECALL_6R, WARMUP_REPS, REPS, &stats_remotecall_6r)
 
-    print_stats(&stats_empty,    "empty:");
+
+	printf("%16s %4s \t %8s \t %8s \t %8s \ %10s\n", "name", "min", "max", "median", "average", "variance");
+	print_stats(&stats_empty,    "empty");
 
     /* results for local calls */
-    print_stats(&stats_fcall_0,  "fcall_0:");
-    print_stats(&stats_fcall_0r, "fcall_0r:");
+	print_stats(&stats_fcall_0,  "fcall_0");
+	print_stats(&stats_fcall_0r, "fcall_0r");
 
-    print_stats(&stats_fcall_1,  "fcall_1:");
-    print_stats(&stats_fcall_1r, "fcall_1r:");
+	print_stats(&stats_fcall_1,  "fcall_1");
+	print_stats(&stats_fcall_1r, "fcall_1r");
 
-    print_stats(&stats_fcall_2,  "fcall_2:");
-    print_stats(&stats_fcall_2r, "fcall_2r:");
+	print_stats(&stats_fcall_2,  "fcall_2");
+	print_stats(&stats_fcall_2r, "fcall_2r");
 
-    print_stats(&stats_fcall_3,  "fcall_3:");
-    print_stats(&stats_fcall_3r, "fcall_3r:");
+	print_stats(&stats_fcall_3,  "fcall_3");
+	print_stats(&stats_fcall_3r, "fcall_3r");
 
-    print_stats(&stats_fcall_4,  "fcall_4:");
-    print_stats(&stats_fcall_4r, "fcall_4r:");
+	print_stats(&stats_fcall_4,  "fcall_4");
+	print_stats(&stats_fcall_4r, "fcall_4r");
 
-    print_stats(&stats_fcall_5,  "fcall_5:");
-    print_stats(&stats_fcall_5r, "fcall_5r:");
+	print_stats(&stats_fcall_5,  "fcall_5");
+	print_stats(&stats_fcall_5r, "fcall_5r");
 
-    print_stats(&stats_fcall_6, "fcall_6:");
-    print_stats(&stats_fcall_6r, "fcall_6r:");
+	print_stats(&stats_fcall_6, "fcall_6");
+	print_stats(&stats_fcall_6r, "fcall_6r");
 
     /* results for remote calls */
-    print_stats(&stats_remotecall_0, "remotecall_0:");
-    print_stats(&stats_remotecall_0r, "remotecall_0r:");
+	print_stats(&stats_remotecall_0, "remotecall_0");
+	print_stats(&stats_remotecall_0r, "remotecall_0r");
 
-    print_stats(&stats_remotecall_1, "remotecall_1:");
-    print_stats(&stats_remotecall_1r, "remotecall_1r:");
+	print_stats(&stats_remotecall_1, "remotecall_1");
+	print_stats(&stats_remotecall_1r, "remotecall_1r");
 
-    print_stats(&stats_remotecall_2, "remotecall_2:");
-    print_stats(&stats_remotecall_2r, "remotecall_2r:");
+	print_stats(&stats_remotecall_2, "remotecall_2");
+	print_stats(&stats_remotecall_2r, "remotecall_2r");
 
-    print_stats(&stats_remotecall_3, "remotecall_3:");
-    print_stats(&stats_remotecall_3r, "remotecall_3r:");
+	print_stats(&stats_remotecall_3, "remotecall_3");
+	print_stats(&stats_remotecall_3r, "remotecall_3r");
 
-    print_stats(&stats_remotecall_4, "remotecall_4:");
-    print_stats(&stats_remotecall_4r, "remotecall_4r:");
+	print_stats(&stats_remotecall_4, "remotecall_4");
+	print_stats(&stats_remotecall_4r, "remotecall_4r");
 
-    print_stats(&stats_remotecall_5, "remotecall_5:");
-    print_stats(&stats_remotecall_5r, "remotecall_5r:");
+	print_stats(&stats_remotecall_5, "remotecall_5");
+	print_stats(&stats_remotecall_5r, "remotecall_5r");
 
-    print_stats(&stats_remotecall_6, "remotecall_6:");
-    print_stats(&stats_remotecall_6r, "remotecall_6r:");
+	print_stats(&stats_remotecall_6, "remotecall_6");
+	print_stats(&stats_remotecall_6r, "remotecall_6r");
 
 	FINALIZE_MICROBENCHMARKS()
 
