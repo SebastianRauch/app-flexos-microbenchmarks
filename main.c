@@ -69,7 +69,10 @@
 #if COMPUTE_MEDIAN
 	#define BENCHMARK(stmt, warmup_runs, measurement_runs, out_stats_ptr) 		\
 		for(int i = 0; i < warmup_runs; i++) {									\
+			t0 = BENCH_START();													\
 			stmt;																\
+			t1 = BENCH_END();													\
+			results[i] = t1 - t0;												\
 		}																		\
 		for(int i = 0; i < measurement_runs; i++) {								\
 			t0 = BENCH_START();													\
@@ -80,12 +83,18 @@
 		do_statistics(results, warmup_runs, out_stats_ptr);
 #else
 	#define BENCHMARK(stmt, warmup_runs, measurement_runs, out_stats_ptr)		\
+		for(int i = 0; i < warmup_runs; i++) {									\
+			t0 = BENCH_START();													\
+			stmt;																\
+			t1 = BENCH_END();													\
+			diff = t1 - t0;														\
+			if (diff < min) min = diff;											\
+			if (diff > max) max = diff;											\
+			sum += diff;														\
+		}																		\
 		min = (uint64_t) -1;													\
 		max = 0;																\
 		sum = 0;																\
-		for(int i = 0; i < warmup_runs; i++) {									\
-			stmt;																\
-		}																		\
 		for(int i = 0; i < measurement_runs; i++) {								\
 			t0 = BENCH_START();													\
 			stmt;																\
@@ -278,11 +287,10 @@ static inline __attribute__ ((always_inline)) uint64_t readtsc()
 {
   unsigned  cycles_low, cycles_high;
 	asm volatile(
-//	"cpuid			\n"
-	"RDTSC			\n"
-        "MOV %%edx, %0		\n"
-        "MOV %%eax, %1		\n"
-        : "=r" (cycles_high), "=r" (cycles_low)
+	"RDTSC				\n"
+    "MOV %%edx, %0		\n"
+    "MOV %%eax, %1		\n"
+    : "=r" (cycles_high), "=r" (cycles_low)
 	:
 	: "%rax", "%rbx", "%rcx", "%rdx"
 	);
