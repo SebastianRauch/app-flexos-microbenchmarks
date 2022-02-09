@@ -512,6 +512,9 @@ static inline void RUN_FCALL(void)
 
 int main(int argc, char *argv[])
 {
+
+	BEGIN_MICROBENCHMARKS()
+
 #if CONFIG_LIBFLEXOS_GATE_INTELPKU_PRIVATE_STACKS
     PRINT("Measuring gate latencies with stack isolating gates...\n");
 #elif CONFIG_LIBFLEXOS_GATE_INTELPKU_SHARED_STACKS
@@ -524,7 +527,6 @@ int main(int argc, char *argv[])
 
 
 #if SERIAL
-    uint32_t overhead_tsc, overhead_gate, overhead_fcall, t0, t1;
     uk_pr_info("> serial\n");
     uk_pr_info("TSC\tgate\tfcall\n");
     for(int i = 0; i < REPS; i++) {
@@ -547,7 +549,6 @@ int main(int argc, char *argv[])
 					overhead_gate, overhead_fcall);
     }
 #else
-	BEGIN_MICROBENCHMARKS()
 
     //uk_pr_info("> loop\n");
     /* only the measurement itself */
@@ -689,97 +690,7 @@ int main(int argc, char *argv[])
 	print_stats(&stats_remotecall_6r, "remotecall_6r");
 
 	FINALIZE_MICROBENCHMARKS()
-	return 0;
 #endif
-
-#if CONFIG_LIBFLEXOS_GATE_INTELPKU_PRIVATE_STACKS
-
-    uk_pr_info("Now measuring data sharing latencies (no domain transitions)\n");
-    uk_pr_info("> serial\n");
-
-#if CONFIG_LIBFLEXOS_ENABLE_DSS
-#define HEADER()					\
-do {							\
-    uk_pr_info("data shadow stack\n");			\
-    uk_pr_info("TSC\tDSS\tstack\n");			\
-} while(0)
-#else
-#define HEADER()					\
-do {							\
-    uk_pr_info("stack-to-heap converted\n");		\
-    uk_pr_info("TSC\ts2h\tstack\n");			\
-} while(0)
-#endif
-
-#define BENCH_SIZE(SIZE)				\
-do {							\
-    uk_pr_info(STRINGIFY(SIZE) "B stack v.s. "		\
-		STRINGIFY(SIZE) "B ");			\
-    HEADER();						\
-							\
-    for(int i = 0; i < REPS; i++) {			\
-        t0 = bench_start();				\
-        asm volatile("");				\
-        t1 = bench_end();				\
-        overhead_tsc = t1 - t0;				\
-							\
-        t0 = bench_start();				\
-	empty_fcall_ ## SIZE ## Bs();			\
-        t1 = bench_end();				\
-        overhead_gate = t1 - t0;			\
-							\
-        t0 = bench_start();				\
-	empty_fcall_ ## SIZE ## B();			\
-        t1 = bench_end();				\
-        overhead_fcall = t1 - t0;			\
-							\
-        uk_pr_info("%" PRId64 "\t%" PRId64 "\t%"		\
-		   PRId64 "\n", overhead_tsc,		\
-		   overhead_gate, overhead_fcall);	\
-    }							\
-} while(0)
-
-#define BENCH_NB(NB)					\
-do {							\
-    uk_pr_info(STRINGIFY(NB) "x1B stack v.s. "		\
-		STRINGIFY(NB) "x1B ");			\
-    HEADER();						\
-							\
-    for(int i = 0; i < REPS; i++) {			\
-        t0 = bench_start();				\
-        asm volatile("");				\
-        t1 = bench_end();				\
-        overhead_tsc = t1 - t0;				\
-							\
-        t0 = bench_start();				\
-	empty_fcall_ ## NB ## xBs();			\
-        t1 = bench_end();				\
-        overhead_gate = t1 - t0;			\
-							\
-        t0 = bench_start();				\
-	empty_fcall_ ## NB ## xB();			\
-        t1 = bench_end();				\
-        overhead_fcall = t1 - t0;			\
-							\
-        uk_pr_info("%" PRId64 "\t%" PRId64 "\t%"		\
-		   PRId64 "\n", overhead_tsc,		\
-		   overhead_gate, overhead_fcall);	\
-    }							\
-} while(0)
-
-    BENCH_SIZE(1);
-    BENCH_SIZE(10);
-    BENCH_SIZE(100);
-    BENCH_SIZE(1000);
-
-    BENCH_NB(1);
-    BENCH_NB(2);
-    BENCH_NB(3);
-    BENCH_NB(4);
-
-#else
-    uk_pr_info("Not measuring data sharing latencies as we're configured with a shared stack.\n");
-#endif /* CONFIG_LIBFLEXOS_GATE_INTELPKU_PRIVATE_STACKS */
 
     return 0;
 }
