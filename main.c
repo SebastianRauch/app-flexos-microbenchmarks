@@ -483,7 +483,7 @@ void empty_fcall_4xBs(void) {
 #define REPS			10000
 #define WARMUP_REPS		100
 
-#define SERIAL 1
+#define SERIAL 0
 
 static inline void RUN_ISOLATED_FCALL(void)
 {
