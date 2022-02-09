@@ -274,7 +274,7 @@ static inline __attribute__ ((always_inline)) uint64_t readtsc()
   	return ((uint64_t) cycles_high << 32) | cycles_low;
 }
 
-#define SERIALIZE_RDTSC 0
+#define SERIALIZE_RDTSC 1
 
 #if SERIALIZE_RDTSC
 #define BENCH_START() bench_start()
