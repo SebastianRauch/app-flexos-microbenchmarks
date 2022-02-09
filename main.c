@@ -48,15 +48,15 @@
 
 /* if this is set store results in an array to be able to compute the median
  * otherwise only compute the average */
-#define COMPUTE_MEDIAN 1
+#define COMPUTE_MEDIAN 0
 
 #if COMPUTE_MEDIAN
 	#define BEGIN_MICROBENCHMARKS() \
-		uint64_t retval;			\
+		uint64_t retval, t0, t1;	\
 		uint64_t *results = uk_malloc(uk_alloc_get_default(), REPS * sizeof(uint64_t));
 #else
 	#define BEGIN_MICROBENCHMARKS() \
-		uint64_t min, max, sum, diff, retval;
+		uint64_t min, max, sum, t0, t1, diff, retval;
 #endif
 
 #if COMPUTE_MEDIAN
@@ -95,12 +95,10 @@
 			if (diff > max) max = diff;											\
 			sum += diff;														\
 		}																		\
-		out_stats_ptr->num_measurements = runs;									\
-		out_stats_ptr->min = min;												\
-		out_stats_ptr->max = max;												\
-		out_stats_ptr->median = (uint64_t) -1;									\
-		out_stats_ptr->average = sum / runs;									\
-		out_stats_ptr->variance = -1;
+		(out_stats_ptr)->num_measurements = measurement_runs;					\
+		(out_stats_ptr)->min = min;												\
+		(out_stats_ptr)->max = max;												\
+		(out_stats_ptr)->average = sum / (measurement_runs);
 #endif
 
 #define GATECALL_0 \
@@ -162,11 +160,16 @@ struct statistics {
 	uint64_t num_measurements;
 	uint64_t min;
 	uint64_t max;
+#if COMPUTE_MEDIAN
 	uint64_t median;
 	double average;
 	double variance;
+#else
+	uint64_t average;
+#endif
 };
 
+#if COMPUTE_MEDIAN
 void do_statistics(uint64_t *measurements, uint64_t n, struct statistics *out_stats) {
 	qsort(measurements, n, sizeof(uint64_t), &cmp_int);
 	uint64_t min = (uint64_t) -1;
@@ -200,15 +203,23 @@ void do_statistics(uint64_t *measurements, uint64_t n, struct statistics *out_st
 	out_stats->average = avg;
 	out_stats->variance = var;
 }
+#endif
 
 void print_stats(struct statistics *stats, const char *str) {
+
+#if COMPUTE_MEDIAN
     int64_t a, b;
     uint64_t x, y;
     fraction_to_dec(stats->average, 2, &a, &x);
     fraction_to_dec(stats->variance, 2, &b, &y);
 	// fomat: description min max median average variance
-    PRINT("%16s %4ld \t %8ld \t %4ld \t %4ld.%ld \t %8ld.%ld\n",
+	PRINT("%16s %4ld \t %8ld \t %4ld \t %4ld.%ld \t %8ld.%ld\n",
         str, stats->min, stats->max, stats->median, a, x, b, y);
+#else
+	// fomat: description min max average
+	PRINT("%16s %4ld \t %8ld \t %4ld\n",
+        str, stats->min, stats->max, stats->average);
+#endif
 }
 
 /* uk_print apparently can't print floating point numbers, so use this instead
@@ -511,9 +522,9 @@ int main(int argc, char *argv[])
     PRINT("Measuring gate latencies with *UNKNOWN* gates...\n");
 #endif
 
-    uint32_t overhead_tsc, overhead_gate, overhead_fcall, t0, t1;
 
 #if SERIAL
+    uint32_t overhead_tsc, overhead_gate, overhead_fcall, t0, t1;
     uk_pr_info("> serial\n");
     uk_pr_info("TSC\tgate\tfcall\n");
     for(int i = 0; i < REPS; i++) {
@@ -538,108 +549,102 @@ int main(int argc, char *argv[])
 #else
 	BEGIN_MICROBENCHMARKS()
 
-    uk_pr_info("> loop\n");
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-        asm volatile("");
-        t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
+    //uk_pr_info("> loop\n");
     /* only the measurement itself */
-    struct statistics stats_empty;
-    do_statistics(results, REPS, &stats_empty);
+	struct statistics rdtsc_overhead;
+	BENCHMARK(asm volatile(""), WARMUP_REPS, REPS, &rdtsc_overhead)
 
     /* measurements for different local function calls */
-    struct statistics stats_fcall_0;
+	struct statistics stats_fcall_0;
 	BENCHMARK(fcall_0(), WARMUP_REPS, REPS, &stats_fcall_0)
 
-    struct statistics stats_fcall_0r;
+	struct statistics stats_fcall_0r;
 	BENCHMARK(fcall_0r(), WARMUP_REPS, REPS, &stats_fcall_0r)
 
-    struct statistics stats_fcall_1;
+	struct statistics stats_fcall_1;
 	BENCHMARK(fcall_1(1), WARMUP_REPS, REPS, &stats_fcall_1)
 
-    struct statistics stats_fcall_1r;
+	struct statistics stats_fcall_1r;
 	BENCHMARK(fcall_1r(1), WARMUP_REPS, REPS, &stats_fcall_1r)
 
-    struct statistics stats_fcall_2;
+	struct statistics stats_fcall_2;
 	BENCHMARK(fcall_2(1, 2), WARMUP_REPS, REPS, &stats_fcall_2)
 
-    struct statistics stats_fcall_2r;
+	struct statistics stats_fcall_2r;
 	BENCHMARK(fcall_2r(1, 2), WARMUP_REPS, REPS, &stats_fcall_2r)
 
-    struct statistics stats_fcall_3;
+	struct statistics stats_fcall_3;
 	BENCHMARK(fcall_3(1, 2, 3), WARMUP_REPS, REPS, &stats_fcall_3)
 
-    struct statistics stats_fcall_3r;
+	struct statistics stats_fcall_3r;
 	BENCHMARK(fcall_3r(1, 2, 3), WARMUP_REPS, REPS, &stats_fcall_3r)
 
-    struct statistics stats_fcall_4;
+	struct statistics stats_fcall_4;
 	BENCHMARK(fcall_4(1, 2, 3, 4), WARMUP_REPS, REPS, &stats_fcall_4)
 
-    struct statistics stats_fcall_4r;
+	struct statistics stats_fcall_4r;
 	BENCHMARK(fcall_4r(1, 2, 3, 4), WARMUP_REPS, REPS, &stats_fcall_4r)
 
-    struct statistics stats_fcall_5;
+	struct statistics stats_fcall_5;
 	BENCHMARK(fcall_5(1, 2, 3, 4, 5), WARMUP_REPS, REPS, &stats_fcall_5)
 
-    struct statistics stats_fcall_5r;
+	struct statistics stats_fcall_5r;
 	BENCHMARK(fcall_5r(1, 2, 3, 4, 5), WARMUP_REPS, REPS, &stats_fcall_5r)
 
-    struct statistics stats_fcall_6;
+	struct statistics stats_fcall_6;
 	BENCHMARK(fcall_6(1, 2, 3, 4, 5, 6), WARMUP_REPS, REPS, &stats_fcall_6)
 
-    struct statistics stats_fcall_6r;
+	struct statistics stats_fcall_6r;
 	BENCHMARK(fcall_6r(1, 2, 3, 4, 5, 6), WARMUP_REPS, REPS, &stats_fcall_6r)
 
-    /* measurements for different remote function calls  */
-    struct statistics stats_remotecall_0;
+	/* measurements for different remote function calls  */
+	struct statistics stats_remotecall_0;
 	BENCHMARK(GATECALL_0, WARMUP_REPS, REPS, &stats_remotecall_0)
 
-    struct statistics stats_remotecall_0r;
+	struct statistics stats_remotecall_0r;
 	BENCHMARK(GATECALL_0R, WARMUP_REPS, REPS, &stats_remotecall_0r)
 
-    struct statistics stats_remotecall_1;
+	struct statistics stats_remotecall_1;
 	BENCHMARK(GATECALL_1, WARMUP_REPS, REPS, &stats_remotecall_1)
 
-    struct statistics stats_remotecall_1r;
+	struct statistics stats_remotecall_1r;
 	BENCHMARK(GATECALL_1R, WARMUP_REPS, REPS, &stats_remotecall_1r)
 
-    struct statistics stats_remotecall_2;
+	struct statistics stats_remotecall_2;
 	BENCHMARK(GATECALL_2, WARMUP_REPS, REPS, &stats_remotecall_2)
 
-    struct statistics stats_remotecall_2r;
+	struct statistics stats_remotecall_2r;
 	BENCHMARK(GATECALL_2R, WARMUP_REPS, REPS, &stats_remotecall_2r)
 
-    struct statistics stats_remotecall_3;
+	struct statistics stats_remotecall_3;
 	BENCHMARK(GATECALL_3, WARMUP_REPS, REPS, &stats_remotecall_3)
 
-    struct statistics stats_remotecall_3r;
+	struct statistics stats_remotecall_3r;
 	BENCHMARK(GATECALL_3R, WARMUP_REPS, REPS, &stats_remotecall_3r)
 
-    struct statistics stats_remotecall_4;
+	struct statistics stats_remotecall_4;
 	BENCHMARK(GATECALL_4, WARMUP_REPS, REPS, &stats_remotecall_4)
 
-    struct statistics stats_remotecall_4r;
+	struct statistics stats_remotecall_4r;
 	BENCHMARK(GATECALL_4R, WARMUP_REPS, REPS, &stats_remotecall_4r)
 
-    struct statistics stats_remotecall_5;
+	struct statistics stats_remotecall_5;
 	BENCHMARK(GATECALL_5, WARMUP_REPS, REPS, &stats_remotecall_5)
 
-    struct statistics stats_remotecall_5r;
+	struct statistics stats_remotecall_5r;
 	BENCHMARK(GATECALL_5R, WARMUP_REPS, REPS, &stats_remotecall_5r)
 
-    struct statistics stats_remotecall_6;
+	struct statistics stats_remotecall_6;
 	BENCHMARK(GATECALL_6, WARMUP_REPS, REPS, &stats_remotecall_6)
 
-    struct statistics stats_remotecall_6r;
+	struct statistics stats_remotecall_6r;
 	BENCHMARK(GATECALL_6R, WARMUP_REPS, REPS, &stats_remotecall_6r)
 
 
 	printf("%16s %4s \t %8s \t %8s \t %8s \ %10s\n", "name", "min", "max", "median", "average", "variance");
-	print_stats(&stats_empty,    "empty");
+	print_stats(&rdtsc_overhead, "rdtsc_overhead");
 
-    /* results for local calls */
+	/* results for local calls */
 	print_stats(&stats_fcall_0,  "fcall_0");
 	print_stats(&stats_fcall_0r, "fcall_0r");
 
@@ -684,7 +689,7 @@ int main(int argc, char *argv[])
 	print_stats(&stats_remotecall_6r, "remotecall_6r");
 
 	FINALIZE_MICROBENCHMARKS()
-
+	return 0;
 #endif
 
 #if CONFIG_LIBFLEXOS_GATE_INTELPKU_PRIVATE_STACKS
