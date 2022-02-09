@@ -43,7 +43,106 @@
 // to easily change print method
 #define PRINT printf
 
-static inline int cmp_int(const void *x, const void *y) 
+/* if this is set store results in an array to be able to compute the median
+ * otherwise only compute the average */
+#define COMPUTE_MEDIAN 1
+
+#if COMPUTE_MEDIAN
+	#define BEGIN_MICROBENCHMARKS() \
+		uint64_t retval;			\
+		uint64_t *results = uk_malloc(uk_alloc_get_default(), REPS * sizeof(uint64_t));
+#else
+	#define BEGIN_MICROBENCHMARKS() \
+		uint64_t min, max, sum, diff, retval;
+#endif
+
+#if COMPUTE_MEDIAN
+	#define FINALIZE_MICROBENCHMARKS() \
+		uk_free(uk_alloc_get_default(), results);
+#else
+	#define FINALIZE_MICROBENCHMARKS()
+#endif
+
+#if COMPUTE_MEDIAN
+	#define BENCHMARK(stmt, warmup_runs, measurement_runs, out_stats_ptr) 		\
+		for(int i = 0; i < warmup_runs; i++) {									\
+			stmt;																\
+		}																		\
+		for(int i = 0; i < measurement_runs; i++) {								\
+			t0 = BENCH_START();													\
+			stmt;																\
+			t1 = BENCH_END();													\
+			results[i] = t1 - t0;												\
+		}																		\
+		do_statistics(results, warmup_runs, out_stats_ptr);
+#else
+	#define BENCHMARK(stmt, warmup_runs, measurement_runs, out_stats_ptr)		\
+		min = (uint64_t) -1;													\
+		max = 0;																\
+		sum = 0;																\
+		for(int i = 0; i < warmup_runs; i++) {									\
+			stmt;																\
+		}																		\
+		for(int i = 0; i < measurement_runs; i++) {								\
+			t0 = BENCH_START();													\
+			stmt;																\
+			t1 = BENCH_END();													\
+			diff = t1 - t0;														\
+			if (diff < min) min = diff;											\
+			if (diff > max) max = diff;											\
+			sum += diff;														\
+		}																		\
+		out_stats_ptr->num_measurements = runs;									\
+		out_stats_ptr->min = min;												\
+		out_stats_ptr->max = max;												\
+		out_stats_ptr->median = (uint64_t) -1;									\
+		out_stats_ptr->average = sum / runs;									\
+		out_stats_ptr->variance = -1;
+#endif
+
+#define GATECALL_0 \
+	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_0);
+
+#define GATECALL_0R \
+	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_0r);
+
+#define GATECALL_1 \
+	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_1, 1);
+
+#define GATECALL_1R \
+	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_1r, 1);
+
+#define GATECALL_2 \
+	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_2, 1, 2);
+
+#define GATECALL_2R \
+	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_2r, 1, 2);
+
+#define GATECALL_3 \
+	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_3, 1, 2, 3);
+
+#define GATECALL_3R \
+	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_3r, 1, 2, 3);
+
+#define GATECALL_4 \
+	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_4, 1, 2, 3, 4);
+
+#define GATECALL_4R \
+	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_4r, 1, 2, 3, 4);
+
+#define GATECALL_5 \
+	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_5, 1, 2, 3, 4, 5);
+
+#define GATECALL_5R \
+	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_4r, 1, 2, 3, 4, 5);
+
+#define GATECALL_6 \
+	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_6, 1, 2, 3, 4, 5, 6);
+
+#define GATECALL_6R \
+	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_6r, 1, 2, 3, 4, 5, 6);
+
+static inline int cmp_int(const void *x, const void *y)
 {
     uint64_t a = *((uint64_t*) x);
     uint64_t b = *((uint64_t*) y);
@@ -85,7 +184,7 @@ void do_statistics(uint64_t *measurements, uint64_t n, struct statistics *out_st
 	for (size_t i = 0; i < n; ++i) {
 		size_t x = measurements[i];
 		var += (x - avg) * (x - avg);
-	}	
+	}
 	var /= (n - 1);
 	out_stats->num_measurements = n;
 	out_stats->min = min;
@@ -105,10 +204,10 @@ void print_stats(struct statistics *stats, const char *str) {
     fraction_to_dec(stats->average, 2, &a, &x);
     fraction_to_dec(stats->variance, 2, &b, &y);
     PRINT("%16s min=%4ld, max=%8ld, median=%4ld,\taverage=%4ld.%ld,\tvariance=%8ld.%ld\n",
-        str, stats->min, stats->max, stats->median, a, x, b, y); 
+        str, stats->min, stats->max, stats->median, a, x, b, y);
 }
 
-/* uk_print apparently can't print floating point numbers, so use this instead 
+/* uk_print apparently can't print floating point numbers, so use this instead
  * simply print the integers a.x */
 void fraction_to_dec(double d, int digits, int64_t *out_a, uint64_t *out_x) {
     double frac = d - ((int64_t) d);
@@ -175,7 +274,7 @@ static inline __attribute__ ((always_inline)) uint64_t readtsc()
   	return ((uint64_t) cycles_high << 32) | cycles_low;
 }
 
-#define SERIALIZE_RDTSC 1
+#define SERIALIZE_RDTSC 0
 
 #if SERIALIZE_RDTSC
 #define BENCH_START() bench_start()
@@ -384,7 +483,7 @@ void empty_fcall_4xBs(void) {
 #define REPS			10000
 #define WARMUP_REPS		100
 
-#define SERIAL 0
+#define SERIAL 1
 
 static inline void RUN_ISOLATED_FCALL(void)
 {
@@ -433,7 +532,8 @@ int main(int argc, char *argv[])
 					overhead_gate, overhead_fcall);
     }
 #else
-    uint64_t *results = uk_malloc(uk_alloc_get_default(), REPS * sizeof(uint64_t));
+	BEGIN_MICROBENCHMARKS()
+
     uk_pr_info("> loop\n");
     for(int i = 0; i < REPS; i++) {
         t0 = BENCH_START();
@@ -446,356 +546,90 @@ int main(int argc, char *argv[])
     do_statistics(results, REPS, &stats_empty);
 
     /* measurements for different local function calls */
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-        fcall_0();
-    }
-
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-        fcall_0();
-	t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_fcall_0;
-    do_statistics(results, REPS, &stats_fcall_0);
+	BENCHMARK(fcall_0(), WARMUP_REPS, REPS, &stats_fcall_0)
 
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-        fcall_0();
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-        fcall_0r();
-	t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_fcall_0r;
-    do_statistics(results, REPS, &stats_fcall_0r);
+	BENCHMARK(fcall_0r(), WARMUP_REPS, REPS, &stats_fcall_0r)
 
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-        fcall_1(1);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-        fcall_1(1);
-	t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_fcall_1;
-    do_statistics(results, REPS, &stats_fcall_1);
+	BENCHMARK(fcall_1(1), WARMUP_REPS, REPS, &stats_fcall_1)
 
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-        fcall_1r(1);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-        fcall_1r(1);
-	t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_fcall_1r;
-    do_statistics(results, REPS, &stats_fcall_1r);
+	BENCHMARK(fcall_1r(1), WARMUP_REPS, REPS, &stats_fcall_1r)
 
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-        fcall_2(1, 2);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-        fcall_2(1, 2);
-	t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_fcall_2;
-    do_statistics(results, REPS, &stats_fcall_2);
+	BENCHMARK(fcall_2(1, 2), WARMUP_REPS, REPS, &stats_fcall_2)
 
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-        fcall_2r(1, 2);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-        fcall_2r(1, 2);
-	t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_fcall_2r;
-    do_statistics(results, REPS, &stats_fcall_2r);
+	BENCHMARK(fcall_2r(1, 2), WARMUP_REPS, REPS, &stats_fcall_2r)
 
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-        fcall_3(1, 2, 3);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-        fcall_3(1, 2, 3);
-	t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_fcall_3;
-    do_statistics(results, REPS, &stats_fcall_3);
+	BENCHMARK(fcall_3(1, 2, 3), WARMUP_REPS, REPS, &stats_fcall_3)
 
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-        fcall_3r(1, 2, 3);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-        fcall_3r(1, 2, 3);
-	t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_fcall_3r;
-    do_statistics(results, REPS, &stats_fcall_3r);
-   
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-        fcall_4(1, 2, 3, 4);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-        fcall_4(1, 2, 3, 4);
-	t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
+	BENCHMARK(fcall_3r(1, 2, 3), WARMUP_REPS, REPS, &stats_fcall_3r)
+
     struct statistics stats_fcall_4;
-    do_statistics(results, REPS, &stats_fcall_4);
+	BENCHMARK(fcall_4(1, 2, 3, 4), WARMUP_REPS, REPS, &stats_fcall_4)
 
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-        fcall_4r(1, 2, 3, 4);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-        fcall_4r(1, 2, 3, 4);
-	t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_fcall_4r;
-    do_statistics(results, REPS, &stats_fcall_4r);
+	BENCHMARK(fcall_4r(1, 2, 3, 4), WARMUP_REPS, REPS, &stats_fcall_4r)
 
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-        fcall_5(1, 2, 3, 4, 5);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-        fcall_5(1, 2, 3, 4, 5);
-	t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_fcall_5;
-    do_statistics(results, REPS, &stats_fcall_5);
+	BENCHMARK(fcall_5(1, 2, 3, 4, 5), WARMUP_REPS, REPS, &stats_fcall_5)
 
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-        fcall_5r(1, 2, 3, 4, 5);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-        fcall_5r(1, 2, 3, 4, 5);
-	t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_fcall_5r;
-    do_statistics(results, REPS, &stats_fcall_5r);
+	BENCHMARK(fcall_5r(1, 2, 3, 4, 5), WARMUP_REPS, REPS, &stats_fcall_5r)
 
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-        fcall_6(1, 2, 3, 4, 5, 6);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-        fcall_6(1, 2, 3, 4, 5, 6);
-	t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_fcall_6;
-    do_statistics(results, REPS, &stats_fcall_6);
+	BENCHMARK(fcall_6(1, 2, 3, 4, 5, 6), WARMUP_REPS, REPS, &stats_fcall_6)
 
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-        fcall_6r(1, 2, 3, 4, 5, 6);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-        fcall_6r(1, 2, 3, 4, 5, 6);
-	t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_fcall_6r;
-    do_statistics(results, REPS, &stats_fcall_6r);
+	BENCHMARK(fcall_6r(1, 2, 3, 4, 5, 6), WARMUP_REPS, REPS, &stats_fcall_6r)
 
-
-
-   
     /* measurements for different remote function calls  */
-    uint64_t retval;
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_0);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_0);
-        t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_remotecall_0;
-    do_statistics(results, REPS, &stats_remotecall_0);
+	BENCHMARK(GATECALL_0, WARMUP_REPS, REPS, &stats_remotecall_0)
 
-
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_0r);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_0r);
-        t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_remotecall_0r;
-    do_statistics(results, REPS, &stats_remotecall_0r);
+	BENCHMARK(GATECALL_0R, WARMUP_REPS, REPS, &stats_remotecall_0r)
 
-
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_1, 1);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_1, 1);
-        t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_remotecall_1;
-    do_statistics(results, REPS, &stats_remotecall_1);
+	BENCHMARK(GATECALL_1, WARMUP_REPS, REPS, &stats_remotecall_1)
 
-
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_1r, 1);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_1r, 1);
-        t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_remotecall_1r;
-    do_statistics(results, REPS, &stats_remotecall_1r);
+	BENCHMARK(GATECALL_1R, WARMUP_REPS, REPS, &stats_remotecall_1r)
 
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_2, 1, 2);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_2, 1, 2);
-        t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_remotecall_2;
-    do_statistics(results, REPS, &stats_remotecall_2);
+	BENCHMARK(GATECALL_2, WARMUP_REPS, REPS, &stats_remotecall_2)
 
-
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_2r, 1, 2);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_2r, 1, 2);
-        t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_remotecall_2r;
-    do_statistics(results, REPS, &stats_remotecall_2r);
+	BENCHMARK(GATECALL_2R, WARMUP_REPS, REPS, &stats_remotecall_2r)
 
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_3, 1, 2, 3);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_3, 1, 2, 3);
-        t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_remotecall_3;
-    do_statistics(results, REPS, &stats_remotecall_3);
+	BENCHMARK(GATECALL_3, WARMUP_REPS, REPS, &stats_remotecall_3)
 
-
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_3r, 1, 2, 3);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_3r, 1, 2, 3);
-        t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_remotecall_3r;
-    do_statistics(results, REPS, &stats_remotecall_3r);
+	BENCHMARK(GATECALL_3R, WARMUP_REPS, REPS, &stats_remotecall_3r)
 
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_4, 1, 2, 3, 4);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_4, 1, 2, 3, 4);
-        t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_remotecall_4;
-    do_statistics(results, REPS, &stats_remotecall_4);
+	BENCHMARK(GATECALL_4, WARMUP_REPS, REPS, &stats_remotecall_4)
 
-
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_4r, 1, 2, 3, 4);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_4r, 1, 2, 3, 4);
-        t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_remotecall_4r;
-    do_statistics(results, REPS, &stats_remotecall_4r);
+	BENCHMARK(GATECALL_4R, WARMUP_REPS, REPS, &stats_remotecall_4r)
 
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_5, 1, 2, 3, 4, 5);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_5, 1, 2, 3, 4, 5);
-        t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_remotecall_5;
-    do_statistics(results, REPS, &stats_remotecall_5);
+	BENCHMARK(GATECALL_5, WARMUP_REPS, REPS, &stats_remotecall_5)
 
-
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_5r, 1, 2, 3, 4, 5);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_5r, 1, 2, 3, 4, 5);
-        t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_remotecall_5r;
-    do_statistics(results, REPS, &stats_remotecall_5r);
+	BENCHMARK(GATECALL_5R, WARMUP_REPS, REPS, &stats_remotecall_5r)
 
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_6, 1, 2, 3, 4, 5, 6);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_6, 1, 2, 3, 4, 5, 6);
-        t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_remotecall_6;
-    do_statistics(results, REPS, &stats_remotecall_6);
+	BENCHMARK(GATECALL_6, WARMUP_REPS, REPS, &stats_remotecall_6)
 
-
-    for (size_t i = 0; i < WARMUP_REPS; ++i) {
-	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_6r, 1, 2, 3, 4, 5, 6);
-    }
-    for(int i = 0; i < REPS; i++) {
-        t0 = BENCH_START();
-	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_6r, 1, 2, 3, 4, 5, 6);
-        t1 = BENCH_END();
-	results[i] = t1 - t0;
-    }
     struct statistics stats_remotecall_6r;
-    do_statistics(results, REPS, &stats_remotecall_6r);
-
+	BENCHMARK(GATECALL_6R, WARMUP_REPS, REPS, &stats_remotecall_6r)
 
     print_stats(&stats_empty,    "empty:");
 
@@ -842,6 +676,8 @@ int main(int argc, char *argv[])
 
     print_stats(&stats_remotecall_6, "remotecall_6:");
     print_stats(&stats_remotecall_6r, "remotecall_6r:");
+
+	FINALIZE_MICROBENCHMARKS()
 
 #endif
 
