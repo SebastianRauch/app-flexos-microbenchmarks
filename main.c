@@ -48,7 +48,7 @@
 
 /* if this is set store results in an array to be able to compute the median
  * otherwise only compute the average */
-#define COMPUTE_MEDIAN 0
+#define COMPUTE_MEDIAN 1
 
 #if COMPUTE_MEDIAN
 	#define BEGIN_MICROBENCHMARKS() \
@@ -163,7 +163,7 @@ struct statistics {
 #if COMPUTE_MEDIAN
 	uint64_t median;
 	double average;
-	double variance;
+	double sdev;
 #else
 	uint64_t average;
 #endif
@@ -201,7 +201,7 @@ void do_statistics(uint64_t *measurements, uint64_t n, struct statistics *out_st
 		out_stats->median = (measurements[n / 2] + measurements[n / 2 - 1]) / 2;
 	}
 	out_stats->average = avg;
-	out_stats->variance = var;
+	out_stats->sdev = sqrt(var);
 }
 #endif
 
@@ -211,8 +211,8 @@ void print_stats(struct statistics *stats, const char *str) {
     int64_t a, b;
     uint64_t x, y;
     fraction_to_dec(stats->average, 2, &a, &x);
-    fraction_to_dec(stats->variance, 2, &b, &y);
-	// fomat: description min max median average variance
+    fraction_to_dec(stats->sdev, 2, &b, &y);
+	// fomat: description min max median average sdev
 	PRINT("%16s %4ld \t %8ld \t %4ld \t %4ld.%ld \t %8ld.%ld\n",
         str, stats->min, stats->max, stats->median, a, x, b, y);
 #else
@@ -642,7 +642,11 @@ int main(int argc, char *argv[])
 	BENCHMARK(GATECALL_6R, WARMUP_REPS, REPS, &stats_remotecall_6r)
 
 
-	printf("%16s %4s \t %8s \t %8s \t %8s \ %10s\n", "name", "min", "max", "median", "average", "variance");
+#if COMPUTE_MEDIAN
+	printf("%16s %4s \t %8s \t %8s %8s \t %8s\n", "name", "min", "max", "median", "average", "sdev");
+#else
+	printf("%16s %4s \t %8s \t %16s\n", "name", "min", "max", "median/avg");
+#endif
 	print_stats(&rdtsc_overhead, "rdtsc_overhead");
 
 	/* results for local calls */
