@@ -38,7 +38,10 @@
 
 #include <uk/alloc.h>
 #include <uk/sched.h>
+
+#if CONFIG_LIBFLEXOS_VMEPT
 #include <flexos/impl/main_annotation.h>
+#endif
 
 // to easily change print method
 #define PRINT printf
@@ -134,7 +137,7 @@
 	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_5, 1, 2, 3, 4, 5);
 
 #define GATECALL_5R \
-	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_4r, 1, 2, 3, 4, 5);
+	flexos_gate_r(libflexosmicrobenchmarks, retval, flexos_microbenchmarks_fcall_5r, 1, 2, 3, 4, 5);
 
 #define GATECALL_6 \
 	flexos_gate(libflexosmicrobenchmarks, flexos_microbenchmarks_fcall_6, 1, 2, 3, 4, 5, 6);
