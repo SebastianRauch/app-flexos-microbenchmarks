@@ -252,11 +252,6 @@ void fraction_to_dec(double d, int digits, int64_t *out_a, uint64_t *out_x) {
 }
 
 
-// some config checks here...
-#if CONFIG_LIBFLEXOS_INTELPKU && !CONFIG_LIBFLEXOS_GATE_INTELPKU_NO_INSTRUMENT
-#error "Microbenchmarks should not be executed with gate instrumentation!"
-#endif
-
 // bench_start returns a timestamp for use to measure the start of a benchmark
 // run.
 __attribute__ ((always_inline)) static inline uint64_t bench_start(void)
@@ -389,132 +384,7 @@ void empty_fcall(void) {
     asm volatile ("");
 }
 
-__attribute__ ((noinline))
-void empty_fcall_1B(void) {
-    char characters[1];
-    /* keep the call from being optimized away */
-    asm volatile ("");
-}
-
-__attribute__ ((noinline))
-void empty_fcall_1Bs(void) {
-    char characters[1] __attribute__((flexos_whitelist));
-    /* keep the call from being optimized away */
-    asm volatile ("");
-}
-
-__attribute__ ((noinline))
-void empty_fcall_10B(void) {
-    char characters[10];
-    /* keep the call from being optimized away */
-    asm volatile ("");
-}
-
-__attribute__ ((noinline))
-void empty_fcall_10Bs(void) {
-    char characters[10] __attribute__((flexos_whitelist));
-    /* keep the call from being optimized away */
-    asm volatile ("");
-}
-
-__attribute__ ((noinline))
-void empty_fcall_100B(void) {
-    char characters[100];
-    /* keep the call from being optimized away */
-    asm volatile ("");
-}
-
-__attribute__ ((noinline))
-void empty_fcall_100Bs(void) {
-    char characters[100] __attribute__((flexos_whitelist));
-    /* keep the call from being optimized away */
-    asm volatile ("");
-}
-
-__attribute__ ((noinline))
-void empty_fcall_1000B(void) {
-    char characters[1000];
-    /* keep the call from being optimized away */
-    asm volatile ("");
-}
-
-__attribute__ ((noinline))
-void empty_fcall_1000Bs(void) {
-    char characters[1000] __attribute__((flexos_whitelist));
-    /* keep the call from being optimized away */
-    asm volatile ("");
-}
-
-__attribute__ ((noinline))
-void empty_fcall_1xB(void) {
-    char characters[1];
-    /* keep the call from being optimized away */
-    asm volatile ("");
-}
-
-__attribute__ ((noinline))
-void empty_fcall_1xBs(void) {
-    char characters[1] __attribute__((flexos_whitelist));
-    /* keep the call from being optimized away */
-    asm volatile ("");
-}
-
-__attribute__ ((noinline))
-void empty_fcall_2xB(void) {
-    char characters1[1];
-    char characters2[1];
-    /* keep the call from being optimized away */
-    asm volatile ("");
-}
-
-__attribute__ ((noinline))
-void empty_fcall_2xBs(void) {
-    char characters1[1] __attribute__((flexos_whitelist));
-    char characters2[1] __attribute__((flexos_whitelist));
-    /* keep the call from being optimized away */
-    asm volatile ("");
-}
-
-__attribute__ ((noinline))
-void empty_fcall_3xB(void) {
-    char characters1[1];
-    char characters2[1];
-    char characters3[1];
-    /* keep the call from being optimized away */
-    asm volatile ("");
-}
-
-__attribute__ ((noinline))
-void empty_fcall_3xBs(void) {
-    char characters1[1] __attribute__((flexos_whitelist));
-    char characters2[1] __attribute__((flexos_whitelist));
-    char characters3[1] __attribute__((flexos_whitelist));
-    /* keep the call from being optimized away */
-    asm volatile ("");
-}
-
-__attribute__ ((noinline))
-void empty_fcall_4xB(void) {
-    char characters1[1];
-    char characters2[1];
-    char characters3[1];
-    char characters4[1];
-    /* keep the call from being optimized away */
-    asm volatile ("");
-}
-
-__attribute__ ((noinline))
-void empty_fcall_4xBs(void) {
-    char characters1[1] __attribute__((flexos_whitelist));
-    char characters2[1] __attribute__((flexos_whitelist));
-    char characters3[1] __attribute__((flexos_whitelist));
-    char characters4[1] __attribute__((flexos_whitelist));
-    /* keep the call from being optimized away */
-    asm volatile ("");
-}
-
 #define REPS			100000
-
 #define SERIAL 0
 
 static inline void RUN_ISOLATED_FCALL(void)
@@ -527,49 +397,19 @@ static inline void RUN_FCALL(void)
 	empty_fcall();
 }
 
-int main(int argc, char *argv[])
-{
+#define MODE_REMOTECALL 0
+#define MODE_RPC_LOWER_BOUND 1
+
+#define MODE MODE_REMOTECALL
+
+
+int main(int argc, char *argv[]) {
+
+	double p = 0.95; // error interval
 
 	BEGIN_MICROBENCHMARKS()
+#if ((MODE) == (MODE_REMOTECALL))
 
-#if CONFIG_LIBFLEXOS_GATE_INTELPKU_PRIVATE_STACKS
-    PRINT("Measuring gate latencies with stack isolating gates...\n");
-#elif CONFIG_LIBFLEXOS_GATE_INTELPKU_SHARED_STACKS
-    PRINT("Measuring gate latencies with shared stacks...\n");
-#elif CONFIG_LIBFLEXOS_VMEPT
-    PRINT("Measuring gate latencies with VM/EPT RPC gates...\n");
-#else
-    PRINT("Measuring gate latencies with *UNKNOWN* gates...\n");
-#endif
-
-
-#if SERIAL
-    uk_pr_info("> serial\n");
-    uk_pr_info("TSC\tgate\tfcall\n");
-    for(int i = 0; i < REPS; i++) {
-        t0 = bench_start();
-        asm volatile("");
-        t1 = bench_end();
-        overhead_tsc = t1 - t0;
-
-        t0 = bench_start();
-	RUN_ISOLATED_FCALL();
-        t1 = bench_end();
-        overhead_gate = t1 - t0;
-
-        t0 = bench_start();
-	RUN_FCALL();
-        t1 = bench_end();
-        overhead_fcall = t1 - t0;
-
-        uk_pr_info("%" PRId64 "\t%" PRId64 "\t%" PRId64 "\n", overhead_tsc,
-					overhead_gate, overhead_fcall);
-    }
-#else
-
-    //uk_pr_info("> loop\n");
-    /* only the measurement itself */
-	double p = 0.95; // error interval
 	struct statistics rdtsc_overhead;
 	BENCHMARK(asm volatile(""), REPS, &rdtsc_overhead, p)
 
@@ -715,8 +555,33 @@ int main(int argc, char *argv[])
 	print_stats(&stats_remotecall_6, "remotecall_6");
 	print_stats(&stats_remotecall_6r, "remotecall_6r");*
 	*/
-	FINALIZE_MICROBENCHMARKS()
-#endif
+#elif ((MODE) == (MODE_RPC_LOWER_BOUND))
+		
+	volatile int *state = (volatile int *) (&comm);
+	*state = STATE_IDLE;
 
+	uint64_t *results = uk_malloc(uk_alloc_get_default(), REPS * sizeof(uint64_t));
+
+	flexos_gate(libflexosmicrobenchmarks, start_comm_test, NULL);
+
+	for (int i = 0; i < REPS; ++i) {
+		*state = STATE_IDLE;
+		t0 = BENCH_START();
+		*state = STATE_SENT;
+		while (*state != STATE_RET) {
+			asm volatile("pause" ::: "memory");
+		} 
+		t1 = BENCH_END();
+		results[i] = t1 - t0;
+	}
+	
+	double p = 0.95; // error interval
+	struct statistics stats_lb;
+	BENCHMARK(asm volatile(""), REPS, &stats_lb, p)
+
+	printf("#%16s %8s\t%8s\t%8s\t%8s\t%8s\t%8s\n", "name", "min", "max", "median", "average", "istart", "iend");
+	print_stats(&stats_lb, "lower_bound");
+#endif
+	FINALIZE_MICROBENCHMARKS()
     return 0;
 }
