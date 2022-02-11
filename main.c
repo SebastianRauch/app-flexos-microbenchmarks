@@ -411,92 +411,90 @@ int main(int argc, char *argv[]) {
 	BENCHMARK(asm volatile(""), REPS, &rdtsc_overhead, p)
 
     /* measurements for different local function calls */
-	/*
 	struct statistics stats_fcall_0;
-	BENCHMARK(fcall_0(), REPS, &stats_fcall_0)
-
+	BENCHMARK(fcall_0(), REPS, &stats_fcall_0, p)
+	/*
 	struct statistics stats_fcall_0r;
-	BENCHMARK(fcall_0r(), REPS, &stats_fcall_0r)
+	BENCHMARK(fcall_0r(), REPS, &stats_fcall_0r, p)
 
 	struct statistics stats_fcall_1;
-	BENCHMARK(fcall_1(1), REPS, &stats_fcall_1)
-	*/
+	BENCHMARK(fcall_1(1), REPS, &stats_fcall_1, p)
+
 	struct statistics stats_fcall_1r;
 	BENCHMARK(fcall_1r(1), REPS, &stats_fcall_1r, p)
-	/*
+
 	struct statistics stats_fcall_2;
-	BENCHMARK(fcall_2(1, 2), REPS, &stats_fcall_2)
+	BENCHMARK(fcall_2(1, 2), REPS, &stats_fcall_2, p)
 
 	struct statistics stats_fcall_2r;
-	BENCHMARK(fcall_2r(1, 2), REPS, &stats_fcall_2r)
+	BENCHMARK(fcall_2r(1, 2), REPS, &stats_fcall_2r, p)
 
 	struct statistics stats_fcall_3;
-	BENCHMARK(fcall_3(1, 2, 3), REPS, &stats_fcall_3)
+	BENCHMARK(fcall_3(1, 2, 3), REPS, &stats_fcall_3, p)
 
 	struct statistics stats_fcall_3r;
-	BENCHMARK(fcall_3r(1, 2, 3), REPS, &stats_fcall_3r)
+	BENCHMARK(fcall_3r(1, 2, 3), REPS, &stats_fcall_3r, p)
 
 	struct statistics stats_fcall_4;
-	BENCHMARK(fcall_4(1, 2, 3, 4), REPS, &stats_fcall_4)
+	BENCHMARK(fcall_4(1, 2, 3, 4), REPS, &stats_fcall_4, p)
 
 	struct statistics stats_fcall_4r;
-	BENCHMARK(fcall_4r(1, 2, 3, 4), REPS, &stats_fcall_4r)
+	BENCHMARK(fcall_4r(1, 2, 3, 4), REPS, &stats_fcall_4r, p)
 
 	struct statistics stats_fcall_5;
-	BENCHMARK(fcall_5(1, 2, 3, 4, 5), REPS, &stats_fcall_5)
+	BENCHMARK(fcall_5(1, 2, 3, 4, 5), REPS, &stats_fcall_5, p)
 
 	struct statistics stats_fcall_5r;
-	BENCHMARK(fcall_5r(1, 2, 3, 4, 5), REPS, &stats_fcall_5r)
+	BENCHMARK(fcall_5r(1, 2, 3, 4, 5), REPS, &stats_fcall_5r, p)
 
 	struct statistics stats_fcall_6;
-	BENCHMARK(fcall_6(1, 2, 3, 4, 5, 6), REPS, &stats_fcall_6)
+	BENCHMARK(fcall_6(1, 2, 3, 4, 5, 6), REPS, &stats_fcall_6, p)
 
 	struct statistics stats_fcall_6r;
-	BENCHMARK(fcall_6r(1, 2, 3, 4, 5, 6), REPS, &stats_fcall_6r)
+	BENCHMARK(fcall_6r(1, 2, 3, 4, 5, 6), REPS, &stats_fcall_6r, p)
 	*/
 	/* measurements for different remote function calls  */
-	/*
 	struct statistics stats_remotecall_0;
-	BENCHMARK(GATECALL_0, REPS, &stats_remotecall_0)
-
+	BENCHMARK(GATECALL_0, REPS, &stats_remotecall_0, p)
+	/*
 	struct statistics stats_remotecall_0r;
-	BENCHMARK(GATECALL_0R, REPS, &stats_remotecall_0r)
+	BENCHMARK(GATECALL_0R, REPS, &stats_remotecall_0r, p)
 
 	struct statistics stats_remotecall_1;
-	BENCHMARK(GATECALL_1, REPS, &stats_remotecall_1)
-	*/
+	BENCHMARK(GATECALL_1, REPS, &stats_remotecall_1, p)
+
 	struct statistics stats_remotecall_1r;
 	BENCHMARK(GATECALL_1R, REPS, &stats_remotecall_1r, p)
-	/*
+
 	struct statistics stats_remotecall_2;
-	BENCHMARK(GATECALL_2, REPS, &stats_remotecall_2)
+	BENCHMARK(GATECALL_2, REPS, &stats_remotecall_2, p)
 
 	struct statistics stats_remotecall_2r;
-	BENCHMARK(GATECALL_2R, REPS, &stats_remotecall_2r)
+	BENCHMARK(GATECALL_2R, REPS, &stats_remotecall_2r, p)
 
 	struct statistics stats_remotecall_3;
-	BENCHMARK(GATECALL_3, REPS, &stats_remotecall_3)
+	BENCHMARK(GATECALL_3, REPS, &stats_remotecall_3, p)
 
 	struct statistics stats_remotecall_3r;
-	BENCHMARK(GATECALL_3R, REPS, &stats_remotecall_3r)
+	BENCHMARK(GATECALL_3R, REPS, &stats_remotecall_3r, p)
 
 	struct statistics stats_remotecall_4;
-	BENCHMARK(GATECALL_4, REPS, &stats_remotecall_4)
+	BENCHMARK(GATECALL_4, REPS, &stats_remotecall_4, p)
 
 	struct statistics stats_remotecall_4r;
-	BENCHMARK(GATECALL_4R, REPS, &stats_remotecall_4r)
+	BENCHMARK(GATECALL_4R, REPS, &stats_remotecall_4r, p)
 
 	struct statistics stats_remotecall_5;
-	BENCHMARK(GATECALL_5, REPS, &stats_remotecall_5)
+	BENCHMARK(GATECALL_5, REPS, &stats_remotecall_5, p)
 
 	struct statistics stats_remotecall_5r;
-	BENCHMARK(GATECALL_5R, REPS, &stats_remotecall_5r)
+	BENCHMARK(GATECALL_5R, REPS, &stats_remotecall_5r, p)
 
 	struct statistics stats_remotecall_6;
-	BENCHMARK(GATECALL_6, REPS, &stats_remotecall_6)
+	BENCHMARK(GATECALL_6, REPS, &stats_remotecall_6, p)
 
 	struct statistics stats_remotecall_6r;
-	BENCHMARK(GATECALL_6R, REPS, &stats_remotecall_6r)
+	BENCHMARK(GATECALL_6R, REPS, &stats_remotecall_6r, p)
 	*/
 
 #if COMPUTE_MEDIAN
@@ -509,13 +507,13 @@ int main(int argc, char *argv[]) {
 	print_stats(&rdtsc_overhead, "rdtsc_overhead");
 
 	/* results for local calls */
-	/*
 	print_stats(&stats_fcall_0,  "fcall_0");
+	/*
 	print_stats(&stats_fcall_0r, "fcall_0r");
 
-	print_stats(&stats_fcall_1,  "fcall_1"); */
+	print_stats(&stats_fcall_1,  "fcall_1");
 	print_stats(&stats_fcall_1r, "fcall_1r");
-	/*
+
 	print_stats(&stats_fcall_2,  "fcall_2");
 	print_stats(&stats_fcall_2r, "fcall_2r");
 
@@ -528,17 +526,16 @@ int main(int argc, char *argv[]) {
 	print_stats(&stats_fcall_5,  "fcall_5");
 	print_stats(&stats_fcall_5r, "fcall_5r");
 
-	print_stats(&stats_fcall_6, "fcall_6"); 
+	print_stats(&stats_fcall_6, "fcall_6");
 	print_stats(&stats_fcall_6r, "fcall_6r"); */
 
     /* results for remote calls */
-	/*
-	print_stats(&stats_remotecall_0, "remotecall_0");
+	print_stats(&stats_remotecall_0, "remotecall_0"); /*
 	print_stats(&stats_remotecall_0r, "remotecall_0r");
 
-	print_stats(&stats_remotecall_1, "remotecall_1"); */
+	print_stats(&stats_remotecall_1, "remotecall_1");
 	print_stats(&stats_remotecall_1r, "remotecall_1r");
-	/*
+
 	print_stats(&stats_remotecall_2, "remotecall_2");
 	print_stats(&stats_remotecall_2r, "remotecall_2r");
 
@@ -555,7 +552,7 @@ int main(int argc, char *argv[]) {
 	print_stats(&stats_remotecall_6r, "remotecall_6r");*
 	*/
 #elif ((MODE) == (MODE_RPC_LOWER_BOUND))
-		
+
 	volatile int *state = (volatile int *) (&comm);
 	*state = STATE_IDLE;
 
@@ -567,11 +564,11 @@ int main(int argc, char *argv[]) {
 		*state = STATE_SENT;
 		while (*state != STATE_RET) {
 			asm volatile("pause" ::: "memory");
-		} 
+		}
 		t1 = BENCH_END();
 		results[i] = t1 - t0;
 	}
-	
+
 	struct statistics stats_lb;
 	do_statistics(results, REPS, &stats_lb, p);
 
