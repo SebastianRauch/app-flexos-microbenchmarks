@@ -222,12 +222,10 @@ void print_stats(struct statistics *stats, const char *str) {
 #if COMPUTE_MEDIAN
 	uint64_t avg = (uint64_t) stats->average;
 	// fomat: description min max median average sdev
-	printf("\n");
 	printf("%16s %8ld \t %8ld \t %8ld \t %8ld \t %8ld \t %8ld\n",
         str, stats->min, stats->max, stats->median, avg, stats->interval_start, stats->interval_end);
 #else
 	// fomat: description min max average
-	printf("\n");
 	printf("%16s %4ld \t %8ld \t %4ld\n",
         str, stats->min, stats->max, stats->average);
 #endif
@@ -502,8 +500,10 @@ int main(int argc, char *argv[]) {
 	*/
 
 #if COMPUTE_MEDIAN
+	printf("\n");
 	printf("#%16s %8s\t%8s\t%8s\t%8s\t%8s\t%8s\n", "name", "min", "max", "median", "average", "istart", "iend");
 #else
+	printf("\n");
 	printf("%16s %4s \t %8s \t %16s\n", "name", "min", "max", "median/avg");
 #endif
 	print_stats(&rdtsc_overhead, "rdtsc_overhead");
