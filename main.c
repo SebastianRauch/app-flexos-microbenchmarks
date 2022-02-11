@@ -575,6 +575,7 @@ int main(int argc, char *argv[]) {
 	struct statistics stats_lb;
 	do_statistics(results, REPS, &stats_lb, p);
 
+	printf("\n");
 	printf("#%16s %8s\t%8s\t%8s\t%8s\t%8s\t%8s\n", "name", "min", "max", "median", "average", "istart", "iend");
 	print_stats(&stats_lb, "lower_bound");
 #endif
