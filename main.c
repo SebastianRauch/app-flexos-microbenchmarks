@@ -296,7 +296,7 @@ static inline __attribute__ ((always_inline)) uint64_t readtsc()
 #define SERIALIZE_RDTSC 1
 #define SERIALIZE_FULL 2
 
-#define SERIALIZE SERIALIZE_RDTSC
+#define SERIALIZE SERIALIZE_FULL
 
 #if ((SERIALIZE) == (SERIALIZE_FULL))
 	#define BENCH_START() bench_start()
