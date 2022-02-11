@@ -43,9 +43,6 @@
 #include <flexos/impl/main_annotation.h>
 #endif
 
-// to easily change print method
-#define PRINT printf
-
 /* if this is set store results in an array to be able to compute the median
  * otherwise only compute the average */
 #define COMPUTE_MEDIAN 1
@@ -225,11 +222,13 @@ void print_stats(struct statistics *stats, const char *str) {
 #if COMPUTE_MEDIAN
 	uint64_t avg = (uint64_t) stats->average;
 	// fomat: description min max median average sdev
-	PRINT("%16s %8ld \t %8ld \t %8ld \t %8ld \t %8ld \t %8ld\n",
+	printf("\n");
+	printf("%16s %8ld \t %8ld \t %8ld \t %8ld \t %8ld \t %8ld\n",
         str, stats->min, stats->max, stats->median, avg, stats->interval_start, stats->interval_end);
 #else
 	// fomat: description min max average
-	PRINT("%16s %4ld \t %8ld \t %4ld\n",
+	printf("\n");
+	printf("%16s %4ld \t %8ld \t %4ld\n",
         str, stats->min, stats->max, stats->average);
 #endif
 }
