@@ -560,8 +560,6 @@ int main(int argc, char *argv[]) {
 	volatile int *state = (volatile int *) (&comm);
 	*state = STATE_IDLE;
 
-	uint64_t *results = uk_malloc(uk_alloc_get_default(), REPS * sizeof(uint64_t));
-
 	flexos_gate(libflexosmicrobenchmarks, start_comm_test, NULL);
 
 	for (int i = 0; i < REPS; ++i) {
@@ -575,9 +573,8 @@ int main(int argc, char *argv[]) {
 		results[i] = t1 - t0;
 	}
 	
-	double p = 0.95; // error interval
 	struct statistics stats_lb;
-	BENCHMARK(asm volatile(""), REPS, &stats_lb, p)
+	do_statistics(results, REPS, &stats_lb, p);
 
 	printf("#%16s %8s\t%8s\t%8s\t%8s\t%8s\t%8s\n", "name", "min", "max", "median", "average", "istart", "iend");
 	print_stats(&stats_lb, "lower_bound");
